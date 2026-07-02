@@ -303,7 +303,7 @@
             </label>
             <label class="form__radio">
               <input type="radio" name="attendance" value="yes-plus">
-              <span>Да, буду +1</span>
+              <span>Да, буду с гостями</span>
             </label>
             <label class="form__radio">
               <input type="radio" name="attendance" value="unsure">
@@ -324,6 +324,11 @@
         <div class="form__group form__group--conditional" id="companions-group" hidden>
           <label for="companions" class="form__label">С кем вы планируете прийти на праздник? <span id="companions-required" hidden>*</span></label>
           <textarea id="companions" name="companions" class="form__textarea" rows="3" placeholder="Например: девушка Татьяна, муж Сергей, сын Данила"></textarea>
+        </div>
+
+        <div class="form__group form__group--conditional" id="party-size-group" hidden>
+          <label for="party-size" class="form__label">Сколько человек будет всего (включая вас)? <span>*</span></label>
+          <input type="number" id="party-size" name="partySize" class="form__input form__input--narrow" min="2" max="10" value="2" inputmode="numeric">
         </div>
 
         <div class="form__group form__group--conditional" id="food-group">
@@ -348,23 +353,30 @@
           </fieldset>
           <fieldset class="form__fieldset" id="food-plus" hidden>
             <legend class="form__label">Выбор блюда <span>*</span></legend>
-            <p class="form__hint">Выберите два варианта — для вас и для гостя.</p>
-            <label class="form__checkbox">
-              <input type="checkbox" name="foodMulti" value="chicken">
-              <span>Курица</span>
-            </label>
-            <label class="form__checkbox">
-              <input type="checkbox" name="foodMulti" value="fish">
-              <span>Рыба</span>
-            </label>
-            <label class="form__checkbox">
-              <input type="checkbox" name="foodMulti" value="meat">
-              <span>Мясо</span>
-            </label>
-            <label class="form__checkbox">
-              <input type="checkbox" name="foodMulti" value="vegetarian">
-              <span>Вегетарианец</span>
-            </label>
+            <p class="form__hint">Отметьте по одному блюду на каждого человека. Можно выбрать одинаковые варианты — нажмите на блюдо ещё раз.</p>
+            <div class="food-multi" id="food-multi">
+              <label class="form__checkbox food-multi__option" data-food="chicken">
+                <input type="checkbox" name="foodMulti" value="chicken" tabindex="-1" aria-hidden="true">
+                <span class="food-multi__label">Курица</span>
+                <span class="food-multi__count" hidden aria-hidden="true"></span>
+              </label>
+              <label class="form__checkbox food-multi__option" data-food="fish">
+                <input type="checkbox" name="foodMulti" value="fish" tabindex="-1" aria-hidden="true">
+                <span class="food-multi__label">Рыба</span>
+                <span class="food-multi__count" hidden aria-hidden="true"></span>
+              </label>
+              <label class="form__checkbox food-multi__option" data-food="meat">
+                <input type="checkbox" name="foodMulti" value="meat" tabindex="-1" aria-hidden="true">
+                <span class="food-multi__label">Мясо</span>
+                <span class="food-multi__count" hidden aria-hidden="true"></span>
+              </label>
+              <label class="form__checkbox food-multi__option" data-food="vegetarian">
+                <input type="checkbox" name="foodMulti" value="vegetarian" tabindex="-1" aria-hidden="true">
+                <span class="food-multi__label">Вегетарианец</span>
+                <span class="food-multi__count" hidden aria-hidden="true"></span>
+              </label>
+            </div>
+            <p class="form__hint food-multi__status" id="food-multi-status" aria-live="polite"></p>
           </fieldset>
         </div>
 

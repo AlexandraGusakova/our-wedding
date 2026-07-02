@@ -286,27 +286,113 @@
     });
   }
 
-  function updateFoodMode(plusOne) {
+  const FOOD_VALUES = ['chicken', 'fish', 'meat', 'vegetarian'];
+  const foodCounts = {
+    chicken: 0,
+    fish: 0,
+    meat: 0,
+    vegetarian: 0,
+  };
+
+  function getPartySize() {
+    const raw = parseInt(form?.partySize?.value, 10);
+    if (!Number.isFinite(raw)) return 2;
+    return Math.min(10, Math.max(2, raw));
+  }
+
+  function getFoodMultiTotal() {
+    return FOOD_VALUES.reduce((sum, value) => sum + foodCounts[value], 0);
+  }
+
+  function resetFoodCounts() {
+    FOOD_VALUES.forEach((value) => {
+      foodCounts[value] = 0;
+    });
+    updateFoodMultiUI();
+  }
+
+  function trimFoodCounts() {
+    let total = getFoodMultiTotal();
+    const partySize = getPartySize();
+
+    while (total > partySize) {
+      for (let i = FOOD_VALUES.length - 1; i >= 0; i -= 1) {
+        const value = FOOD_VALUES[i];
+        if (foodCounts[value] > 0) {
+          foodCounts[value] -= 1;
+          total -= 1;
+          break;
+        }
+      }
+    }
+  }
+
+  function getFoodMultiSelection() {
+    return FOOD_VALUES.flatMap((value) => Array(foodCounts[value]).fill(value));
+  }
+
+  function updateFoodMultiUI() {
+    const total = getFoodMultiTotal();
+    const partySize = getPartySize();
+
+    form?.querySelectorAll('.food-multi__option').forEach((label) => {
+      const value = label.dataset.food;
+      const count = foodCounts[value] || 0;
+      const input = label.querySelector('input');
+      const countEl = label.querySelector('.food-multi__count');
+
+      if (input) input.checked = count > 0;
+      if (countEl) {
+        if (count > 1) {
+          countEl.textContent = `×${count}`;
+          countEl.hidden = false;
+        } else {
+          countEl.textContent = '';
+          countEl.hidden = true;
+        }
+      }
+    });
+
+    const status = document.getElementById('food-multi-status');
+    if (status) {
+      status.textContent = `Выбрано ${total} из ${partySize}`;
+    }
+  }
+
+  function onFoodMultiClick(e) {
+    e.preventDefault();
+
+    const label = e.currentTarget;
+    const value = label.dataset.food;
+    if (!value || !FOOD_VALUES.includes(value)) return;
+
+    const total = getFoodMultiTotal();
+    const count = foodCounts[value];
+    const partySize = getPartySize();
+
+    if (total < partySize) {
+      foodCounts[value] = count + 1;
+    } else if (count > 0) {
+      foodCounts[value] = count - 1;
+    }
+
+    updateFoodMultiUI();
+  }
+
+  function updateFoodMode(withGuests) {
     const foodSingle = document.getElementById('food-single');
     const foodPlus = document.getElementById('food-plus');
     if (!foodSingle || !foodPlus) return;
 
-    foodSingle.hidden = plusOne;
-    foodPlus.hidden = !plusOne;
+    foodSingle.hidden = withGuests;
+    foodPlus.hidden = !withGuests;
 
-    if (plusOne) {
+    if (withGuests) {
       clearGroupInputs(foodSingle);
+      updateFoodMultiUI();
     } else {
-      clearGroupInputs(foodPlus);
+      resetFoodCounts();
     }
-  }
-
-  function limitFoodMultiSelection() {
-    const checked = form.querySelectorAll('input[name="foodMulti"]:checked');
-    if (checked.length <= 2) return;
-
-    checked[checked.length - 1].checked = false;
-    alert('Можно выбрать не более двух блюд — для вас и для гостя.');
   }
 
   function updateFormVisibility() {
@@ -318,6 +404,25 @@
     const plusOne = attendance === 'yes-plus';
     const showCompanions = plusOne || unsure;
     const transferPickup = needsTransferPickup();
+
+    const partySizeGroup = document.getElementById('party-size-group');
+    const partySizeEl = form.partySize;
+
+    setGroupVisible(partySizeGroup, plusOne && attending);
+    if (partySizeEl) {
+      if (plusOne && attending) {
+        partySizeEl.setAttribute('required', '');
+      } else {
+        partySizeEl.removeAttribute('required');
+      }
+    }
+    if (!plusOne || !attending) {
+      if (partySizeEl) partySizeEl.value = '2';
+      resetFoodCounts();
+    } else {
+      trimFoodCounts();
+      updateFoodMultiUI();
+    }
 
     const companionsGroup = document.getElementById('companions-group');
     const companionsEl = form.companions;
@@ -385,8 +490,12 @@
     form.querySelectorAll('input[name="attendance"], input[name="transfer"], input[name="allergiesChoice"]').forEach((input) => {
       input.addEventListener('change', updateFormVisibility);
     });
-    form.querySelectorAll('input[name="foodMulti"]').forEach((input) => {
-      input.addEventListener('change', limitFoodMultiSelection);
+    form.querySelectorAll('.food-multi__option').forEach((label) => {
+      label.addEventListener('click', onFoodMultiClick);
+    });
+    form.partySize?.addEventListener('input', () => {
+      trimFoodCounts();
+      updateFoodMultiUI();
     });
     updateFormVisibility();
 
@@ -428,13 +537,20 @@
       const transfer = form.querySelector('input[name="transfer"]:checked')?.value || '';
       const transferPickup = form.querySelector('input[name="transferPickup"]:checked');
       const foodSingle = form.querySelector('input[name="food"]:checked');
-      const foodMultiChecked = form.querySelectorAll('input[name="foodMulti"]:checked');
+      const foodMultiSelection = getFoodMultiSelection();
       const overnight = form.querySelector('input[name="overnight"]:checked');
       const alcoholChecked = form.querySelectorAll('input[name="alcohol"]:checked');
 
+      if (isPlusOne && (!form.partySize?.value || getPartySize() < 2)) {
+        form.partySize?.focus();
+        alert('Пожалуйста, укажите, сколько человек будет всего.');
+        return;
+      }
+
       if (!isNotAttending && isPlusOne) {
-        if (foodMultiChecked.length !== 2) {
-          alert('Пожалуйста, выберите два блюда — для вас и для гостя.');
+        const partySize = getPartySize();
+        if (foodMultiSelection.length !== partySize) {
+          alert(`Пожалуйста, выберите блюда для всех ${partySize} человек.`);
           return;
         }
       } else if (!isNotAttending && !foodSingle) {
@@ -471,9 +587,10 @@
         attendance: attendance.value,
         attendanceReason: isUnsure ? attendanceReason : '',
         companions,
+        partySize: isPlusOne ? getPartySize() : '',
         food: !isNotAttending
           ? isPlusOne
-            ? Array.from(foodMultiChecked).map((cb) => cb.value)
+            ? foodMultiSelection
             : foodSingle.value
           : '',
         transfer,

@@ -1360,6 +1360,26 @@ a {
   border: none;
 }
 
+.form__input--narrow {
+  max-width: 6rem;
+}
+
+.food-multi__count {
+  margin-left: auto;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--color-sage);
+}
+
+.food-multi__status {
+  margin-top: 0.5rem;
+  margin-bottom: 0;
+}
+
+.food-multi__option {
+  user-select: none;
+}
+
 .form__radio,
 .form__checkbox {
   display: flex;
