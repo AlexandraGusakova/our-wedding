@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" role="img" aria-label="Логотип Александр и Александра">
+<defs><style>
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&display=swap');
+  @import url('https://fonts.cdnfonts.com/css/miama-nueva');
+  .serif { font-family: 'Cormorant Garamond', Georgia, serif; }
+  .script { font-family: 'Miama Nueva', 'Segoe Script', cursive; }
+</style></defs>
+<g fill="#8B9784" stroke="#8B9784" stroke-linecap="round" stroke-linejoin="round">
+<rect width="384" height="512" fill="#EAE4DC"/>
+<path d="M 164 122 C 176 112, 188 106, 200 102 C 212 98, 224 98, 236 102 C 248 106, 258 114, 266 124 M 200 102 C 204 94, 208 86, 212 78 M 224 98 C 228 90, 232 82, 236 74 M 236 102 C 240 94, 244 86, 248 78" fill="none" stroke-width="1.1"/>
+<line x1="108" y1="140" x2="168" y2="140" stroke-width="0.8" fill="none"/>
+<line x1="216" y1="140" x2="276" y2="140" stroke-width="0.8" fill="none"/>
+<circle cx="192" cy="140" r="2.5" fill="#8B9784" stroke="none"/>
+<text class="serif" x="192.0" y="230" text-anchor="middle" font-size="22" letter-spacing="0.12em" fill="#8B9784">Александр</text>
+<text class="script" x="192.0" y="260" text-anchor="middle" font-size="18.7" fill="#8B9784">и</text>
+<text class="serif" x="192.0" y="290" text-anchor="middle" font-size="22" letter-spacing="0.12em" fill="#8B9784">Александра</text>
+<line x1="128" y1="350" x2="256" y2="350" stroke-width="0.8" fill="none"/>
+<circle cx="184" cy="350" r="2" fill="#8B9784" stroke="none"/>
+<circle cx="192" cy="350" r="3" fill="#8B9784" stroke="none"/>
+<circle cx="200" cy="350" r="2" fill="#8B9784" stroke="none"/>
+</g>
+</svg>

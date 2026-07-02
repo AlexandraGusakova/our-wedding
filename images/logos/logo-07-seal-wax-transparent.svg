@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" role="img" aria-label="Логотип Александр и Александра">
+<defs><style>
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&display=swap');
+  @import url('https://fonts.cdnfonts.com/css/miama-nueva');
+  .serif { font-family: 'Cormorant Garamond', Georgia, serif; }
+  .script { font-family: 'Miama Nueva', 'Segoe Script', cursive; }
+</style></defs>
+<g fill="#8B9784" stroke="#8B9784" stroke-linecap="round" stroke-linejoin="round">
+
+<path d="M 330.0 248.0 L 333.8 266.7 L 325.3 283.7 L 324.1 302.7 L 311.5 317.0 L 305.4 335.1 L 289.6 345.6 L 279.1 361.4 L 261.0 367.5 L 246.7 380.1 L 227.7 381.3 L 210.7 389.8 L 192.0 386.0 L 173.3 389.8 L 156.3 381.3 L 137.3 380.1 L 123.0 367.5 L 104.9 361.4 L 94.4 345.6 L 78.6 335.1 L 72.5 317.0 L 59.9 302.7 L 58.7 283.7 L 50.2 266.7 L 54.0 248.0 L 50.2 229.3 L 58.7 212.3 L 59.9 193.3 L 72.5 179.0 L 78.6 160.9 L 94.4 150.4 L 104.9 134.6 L 123.0 128.5 L 137.3 115.9 L 156.3 114.7 L 173.3 106.2 L 192.0 110.0 L 210.7 106.2 L 227.7 114.7 L 246.7 115.9 L 261.0 128.5 L 279.1 134.6 L 289.6 150.4 L 305.4 160.9 L 311.5 179.0 L 324.1 193.3 L 325.3 212.3 L 333.8 229.3 Z" fill="none" stroke-width="1.1"/>
+<circle cx="192.0" cy="248" r="120" fill="none" stroke-width="0.9"/>
+<text class="serif" x="192.0" y="222" text-anchor="middle" font-size="58" font-weight="500" fill="#8B9784">A</text>
+<text class="serif" x="192.0" y="302" text-anchor="middle" font-size="58" font-weight="500" fill="#8B9784">A</text>
+<line x1="140.0" y1="262" x2="244.0" y2="262" stroke-width="0.9" fill="none"/>
+<path d="M 210 262 C 218 256, 226 250, 234 244 C 242 238, 250 234, 258 230 M 226 250 C 230 244, 234 238, 238 232" fill="none" stroke-width="1.0"/>
+</g>
+</svg>
