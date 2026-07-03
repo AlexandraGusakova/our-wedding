@@ -81,9 +81,11 @@
 
   let copyToastTimer;
 
-  function showCopyToast() {
+  function showCopyToast(message) {
     const toast = document.getElementById('copy-toast');
     if (!toast) return;
+
+    if (message) toast.textContent = message;
 
     toast.hidden = false;
     toast.classList.add('is-visible');
@@ -93,8 +95,58 @@
       toast.classList.remove('is-visible');
       window.setTimeout(() => {
         toast.hidden = true;
+        if (message) toast.textContent = 'Скопировано';
       }, 250);
-    }, 2000);
+    }, 4000);
+  }
+
+  function normalizeTelegramUrl(url) {
+    const trimmed = String(url || '').trim();
+    if (!trimmed) return '';
+
+    if (trimmed.startsWith('tel:')) {
+      const digits = trimmed.slice(4).replace(/\D/g, '');
+      return digits ? `https://t.me/+${digits}` : '';
+    }
+
+    const asPhone = trimmed.replace(/\s/g, '');
+    if (/^\+\d+$/.test(asPhone)) return `https://t.me/${asPhone}`;
+    if (/^\d{7,}$/.test(asPhone)) return `https://t.me/+${asPhone}`;
+
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('tg://')) {
+      return trimmed;
+    }
+
+    return `https://t.me/${trimmed.replace(/^@/, '')}`;
+  }
+
+  function getTelegramAppUrl(webUrl) {
+    const phoneMatch = webUrl.match(/^https?:\/\/t\.me\/\+(\d+)$/);
+    if (phoneMatch) return `tg://resolve?phone=${phoneMatch[1]}`;
+
+    const usernameMatch = webUrl.match(/^https?:\/\/t\.me\/([A-Za-z0-9_]{5,})$/);
+    if (usernameMatch) return `tg://resolve?domain=${usernameMatch[1]}`;
+
+    const inviteMatch = webUrl.match(/^https?:\/\/t\.me\/\+([A-Za-z0-9_-]+)$/);
+    if (inviteMatch) return `tg://join?invite=${inviteMatch[1]}`;
+
+    return webUrl;
+  }
+
+  function isMobileDevice() {
+    return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  }
+
+  function openTelegramLink(webUrl) {
+    const normalizedUrl = normalizeTelegramUrl(webUrl);
+    if (!normalizedUrl) return;
+
+    if (isMobileDevice()) {
+      window.location.href = getTelegramAppUrl(normalizedUrl);
+      return;
+    }
+
+    window.open(normalizedUrl, '_blank', 'noopener,noreferrer');
   }
 
   function initContacts() {
@@ -103,8 +155,15 @@
 
     document.querySelectorAll('.js-telegram-group-link').forEach((tgLink) => {
       if (tgUrl) {
-        tgLink.href = tgUrl;
+        const normalizedGroupUrl = normalizeTelegramUrl(tgUrl);
+        tgLink.href = normalizedGroupUrl;
         tgLink.removeAttribute('disabled');
+        tgLink.addEventListener('click', (e) => {
+          if (isMobileDevice()) {
+            e.preventDefault();
+            openTelegramLink(normalizedGroupUrl);
+          }
+        });
       } else {
         tgLink.removeAttribute('href');
         tgLink.setAttribute('disabled', '');
@@ -191,10 +250,16 @@
     });
 
     document.querySelectorAll('.js-organizer-telegram').forEach((telegramEl) => {
-      if (organizerTelegramUrl) {
-        telegramEl.href = organizerTelegramUrl;
+      const normalizedTelegramUrl = normalizeTelegramUrl(organizerTelegramUrl);
+
+      if (normalizedTelegramUrl) {
+        telegramEl.href = normalizedTelegramUrl;
         telegramEl.setAttribute('aria-label', organizerTelegramLabel);
         telegramEl.hidden = false;
+        telegramEl.addEventListener('click', (e) => {
+          e.preventDefault();
+          openTelegramLink(normalizedTelegramUrl);
+        });
       } else {
         telegramEl.hidden = true;
       }

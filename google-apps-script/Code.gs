@@ -32,7 +32,7 @@ var SUMMARY_SHEET = 'Сводка';
 
 var ATTENDANCE_LABELS = {
   yes: 'Да, обязательно буду',
-  'yes-plus': 'Да, буду +1',
+  'yes-plus': 'Да, буду с гостями',
   unsure: 'Затрудняюсь ответить',
   no: 'Нет, не получится',
 };
@@ -305,7 +305,7 @@ function getSummaryMetrics_() {
   return [
     ['Всего ответов', countaFormula_(sheetRange('B2:B'))],
     ['Придут (да)', countifFormula_(sheetRange('C:C'), 'Да, обязательно буду')],
-    ['Придут (+1)', countifFormula_(sheetRange('C:C'), 'Да, буду +1')],
+    ['Придут с гостями', countifFormula_(sheetRange('C:C'), 'Да, буду с гостями')],
     ['Затрудняются ответить', countifFormula_(sheetRange('C:C'), 'Затрудняюсь ответить')],
     ['Не смогут прийти', countifFormula_(sheetRange('C:C'), 'Нет, не получится')],
     ['', ''],
