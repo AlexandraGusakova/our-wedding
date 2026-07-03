@@ -351,6 +351,7 @@
     });
   }
 
+  const PLUS_ONE_DISH_COUNT = 2;
   const FOOD_VALUES = ['chicken', 'fish', 'meat', 'vegetarian'];
   const foodCounts = {
     chicken: 0,
@@ -358,12 +359,6 @@
     meat: 0,
     vegetarian: 0,
   };
-
-  function getPartySize() {
-    const raw = parseInt(form?.partySize?.value, 10);
-    if (!Number.isFinite(raw)) return 2;
-    return Math.min(10, Math.max(2, raw));
-  }
 
   function getFoodMultiTotal() {
     return FOOD_VALUES.reduce((sum, value) => sum + foodCounts[value], 0);
@@ -378,9 +373,8 @@
 
   function trimFoodCounts() {
     let total = getFoodMultiTotal();
-    const partySize = getPartySize();
 
-    while (total > partySize) {
+    while (total > PLUS_ONE_DISH_COUNT) {
       for (let i = FOOD_VALUES.length - 1; i >= 0; i -= 1) {
         const value = FOOD_VALUES[i];
         if (foodCounts[value] > 0) {
@@ -398,7 +392,6 @@
 
   function updateFoodMultiUI() {
     const total = getFoodMultiTotal();
-    const partySize = getPartySize();
 
     form?.querySelectorAll('.food-multi__option').forEach((label) => {
       const value = label.dataset.food;
@@ -420,7 +413,7 @@
 
     const status = document.getElementById('food-multi-status');
     if (status) {
-      status.textContent = `Выбрано ${total} из ${partySize}`;
+      status.textContent = `Выбрано ${total} из ${PLUS_ONE_DISH_COUNT}`;
     }
   }
 
@@ -433,9 +426,8 @@
 
     const total = getFoodMultiTotal();
     const count = foodCounts[value];
-    const partySize = getPartySize();
 
-    if (total < partySize) {
+    if (total < PLUS_ONE_DISH_COUNT) {
       foodCounts[value] = count + 1;
     } else if (count > 0) {
       foodCounts[value] = count - 1;
@@ -470,19 +462,7 @@
     const showCompanions = plusOne || unsure;
     const transferPickup = needsTransferPickup();
 
-    const partySizeGroup = document.getElementById('party-size-group');
-    const partySizeEl = form.partySize;
-
-    setGroupVisible(partySizeGroup, plusOne && attending);
-    if (partySizeEl) {
-      if (plusOne && attending) {
-        partySizeEl.setAttribute('required', '');
-      } else {
-        partySizeEl.removeAttribute('required');
-      }
-    }
     if (!plusOne || !attending) {
-      if (partySizeEl) partySizeEl.value = '2';
       resetFoodCounts();
     } else {
       trimFoodCounts();
@@ -558,10 +538,6 @@
     form.querySelectorAll('.food-multi__option').forEach((label) => {
       label.addEventListener('click', onFoodMultiClick);
     });
-    form.partySize?.addEventListener('input', () => {
-      trimFoodCounts();
-      updateFoodMultiUI();
-    });
     updateFormVisibility();
 
     form.addEventListener('submit', async (e) => {
@@ -606,16 +582,9 @@
       const overnight = form.querySelector('input[name="overnight"]:checked');
       const alcoholChecked = form.querySelectorAll('input[name="alcohol"]:checked');
 
-      if (isPlusOne && (!form.partySize?.value || getPartySize() < 2)) {
-        form.partySize?.focus();
-        alert('Пожалуйста, укажите, сколько человек будет всего.');
-        return;
-      }
-
       if (!isNotAttending && isPlusOne) {
-        const partySize = getPartySize();
-        if (foodMultiSelection.length !== partySize) {
-          alert(`Пожалуйста, выберите блюда для всех ${partySize} человек.`);
+        if (foodMultiSelection.length !== PLUS_ONE_DISH_COUNT) {
+          alert('Пожалуйста, выберите два блюда — для вас и для гостя.');
           return;
         }
       } else if (!isNotAttending && !foodSingle) {
@@ -652,7 +621,6 @@
         attendance: attendance.value,
         attendanceReason: isUnsure ? attendanceReason : '',
         companions,
-        partySize: isPlusOne ? getPartySize() : '',
         food: !isNotAttending
           ? isPlusOne
             ? foodMultiSelection
