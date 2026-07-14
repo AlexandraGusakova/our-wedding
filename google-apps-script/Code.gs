@@ -49,7 +49,19 @@ var PICKUP_LABELS = {
   palazzo: 'район Палаццо',
 };
 
-var FOOD_LABELS = {
+var DIETARY_LABELS = {
+  none: 'Особых ограничений нет',
+  'no-fish': 'Не ем рыбу и морепродукты',
+  'no-pork': 'Не ем свинину',
+  'no-beef': 'Не ем говядину',
+  'no-poultry': 'Не ем птицу',
+  vegetarian: 'Вегетарианское питание',
+  vegan: 'Веганское питание',
+  allergy: 'Пищевая аллергия',
+  other: 'Другое',
+};
+
+var FOOD_LABELS_LEGACY = {
   chicken: 'Курица',
   fish: 'Рыба',
   meat: 'Мясо',
@@ -112,9 +124,9 @@ function setupSheet() {
     'С кем приходит',
     'Трансфер',
     'Откуда трансфер',
-    'Блюдо',
+    'Особенности питания',
     'Алкоголь',
-    'Аллергии',
+    'Подробности (питание)',
     'Ночёвка',
   ];
 
@@ -233,16 +245,20 @@ function buildResponseRow_(payload) {
     })
     .join(', ');
 
-  var foodList = Array.isArray(payload.food)
-    ? payload.food
-    : payload.food
-      ? [payload.food]
-      : [];
-  var foodText = foodList
+  var dietaryList = Array.isArray(payload.dietary)
+    ? payload.dietary
+    : Array.isArray(payload.food)
+      ? payload.food
+      : payload.dietary || payload.food
+        ? [payload.dietary || payload.food]
+        : [];
+  var dietaryText = dietaryList
     .map(function (value) {
-      return FOOD_LABELS[value] || value;
+      return DIETARY_LABELS[value] || FOOD_LABELS_LEGACY[value] || value;
     })
     .join(', ');
+
+  var dietaryDetails = String(payload.dietaryDetails || payload.allergies || '').trim();
 
   return [
     new Date(),
@@ -252,9 +268,9 @@ function buildResponseRow_(payload) {
     String(payload.companions || '').trim(),
     TRANSFER_LABELS[payload.transfer] || payload.transfer || '—',
     PICKUP_LABELS[payload.transferPickup] || payload.transferPickup || '—',
-    foodText,
+    dietaryText,
     alcoholText,
-    String(payload.allergies || '').trim(),
+    dietaryDetails,
     OVERNIGHT_LABELS[payload.overnight] || payload.overnight || '—',
   ];
 }
@@ -314,10 +330,11 @@ function getSummaryMetrics_() {
     ['Трансфер: туда и обратно', countifFormula_(sheetRange('F:F'), 'И туда, и обратно')],
     ['Трансфер не нужен', countifFormula_(sheetRange('F:F'), 'Не нужен')],
     ['', ''],
-    ['Курица', countifFormula_(sheetRange('H:H'), '*Курица*')],
-    ['Рыба', countifFormula_(sheetRange('H:H'), '*Рыба*')],
-    ['Мясо', countifFormula_(sheetRange('H:H'), '*Мясо*')],
-    ['Вегетарианец', countifFormula_(sheetRange('H:H'), '*Вегетарианец*')],
+    ['Особых ограничений нет', countifFormula_(sheetRange('H:H'), '*Особых ограничений нет*')],
+    ['Без рыбы и морепродуктов', countifFormula_(sheetRange('H:H'), '*рыбу и морепродукты*')],
+    ['Вегетарианское питание', countifFormula_(sheetRange('H:H'), '*Вегетарианское*')],
+    ['Веганское питание', countifFormula_(sheetRange('H:H'), '*Веганское*')],
+    ['Пищевая аллергия', countifFormula_(sheetRange('H:H'), '*Пищевая аллергия*')],
     ['', ''],
     ['Белое вино', countifFormula_(sheetRange('I:I'), '*Белое вино*')],
     ['Красное вино', countifFormula_(sheetRange('I:I'), '*Красное вино*')],
@@ -327,7 +344,7 @@ function getSummaryMetrics_() {
     ['', ''],
     ['Ночёвка: да', countifFormula_(sheetRange('K:K'), 'Да*')],
     ['Ночёвка: нет', countifFormula_(sheetRange('K:K'), 'Нет*')],
-    ['С аллергиями', allergiesFormula_()],
+    ['С особенностями питания', dietaryRestrictionsFormula_()],
   ];
 }
 
@@ -378,7 +395,7 @@ function buildPivotTables_(summary, sourceRange) {
     { cell: 'D6', col: 3, title: 'Присутствие' },
     { cell: 'J6', col: 6, title: 'Трансфер' },
     { cell: 'D20', col: 7, title: 'Откуда трансфер' },
-    { cell: 'J20', col: 8, title: 'Блюда' },
+    { cell: 'J20', col: 8, title: 'Особенности питания' },
     { cell: 'D34', col: 11, title: 'Ночёвка' },
   ];
 
@@ -473,10 +490,15 @@ function countaFormula_(rangeRef) {
   return '=COUNTA(' + rangeRef + ')';
 }
 
-/** =COUNTIF(Ответы!J:J;"<>")-COUNTIF(Ответы!J:J;"Нет") */
+/** Ответы с ограничениями в питании (колонка H без «Особых ограничений нет» или с подробностями в J). */
+function dietaryRestrictionsFormula_() {
+  var dietaryRef = SHEET_NAME + '!H2:H';
+  var detailsRef = SHEET_NAME + '!J2:J';
+  return '=' + countifExpr_(dietaryRef, '<>') + '-' + countifExpr_(dietaryRef, '*Особых ограничений нет*') + '+' + countifExpr_(detailsRef, '<>');
+}
+
 function allergiesFormula_() {
-  var ref = SHEET_NAME + '!J2:J';
-  return '=' + countifExpr_(ref, '<>') + '-' + countifExpr_(ref, 'Нет');
+  return dietaryRestrictionsFormula_();
 }
 
 function getTelegramProps_() {
@@ -573,13 +595,13 @@ function sendTelegramNotification_(payload, row) {
       lines.push('📍 Откуда: ' + row[6]);
     }
     if (row[7]) {
-      lines.push('🍽 Блюдо: ' + row[7]);
+      lines.push('🍽 Питание: ' + row[7]);
     }
     if (row[8]) {
       lines.push('🥂 Алкоголь: ' + row[8]);
     }
-    if (row[9] && row[9] !== 'Нет') {
-      lines.push('⚠️ Аллергии: ' + row[9]);
+    if (row[9]) {
+      lines.push('📝 Подробности: ' + row[9]);
     }
     if (row[10] && row[10] !== '—') {
       lines.push('🌙 Ночёвка: ' + row[10]);

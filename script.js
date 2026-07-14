@@ -351,104 +351,31 @@
     });
   }
 
-  const PLUS_ONE_DISH_COUNT = 2;
-  const FOOD_VALUES = ['chicken', 'fish', 'meat', 'vegetarian'];
-  const foodCounts = {
-    chicken: 0,
-    fish: 0,
-    meat: 0,
-    vegetarian: 0,
-  };
+  const DIETARY_NONE_VALUE = 'none';
 
-  function getFoodMultiTotal() {
-    return FOOD_VALUES.reduce((sum, value) => sum + foodCounts[value], 0);
+  function getDietaryChecked() {
+    return form ? Array.from(form.querySelectorAll('input[name="dietary"]:checked')) : [];
   }
 
-  function resetFoodCounts() {
-    FOOD_VALUES.forEach((value) => {
-      foodCounts[value] = 0;
-    });
-    updateFoodMultiUI();
-  }
+  function onDietaryChange(changedInput) {
+    if (!form || !changedInput) return;
 
-  function trimFoodCounts() {
-    let total = getFoodMultiTotal();
+    const checked = getDietaryChecked();
 
-    while (total > PLUS_ONE_DISH_COUNT) {
-      for (let i = FOOD_VALUES.length - 1; i >= 0; i -= 1) {
-        const value = FOOD_VALUES[i];
-        if (foodCounts[value] > 0) {
-          foodCounts[value] -= 1;
-          total -= 1;
-          break;
+    if (changedInput.value === DIETARY_NONE_VALUE && changedInput.checked) {
+      checked.forEach((input) => {
+        if (input !== changedInput) {
+          input.checked = false;
         }
+      });
+      return;
+    }
+
+    if (changedInput.checked) {
+      const noneInput = form.querySelector('input[name="dietary"][value="' + DIETARY_NONE_VALUE + '"]');
+      if (noneInput) {
+        noneInput.checked = false;
       }
-    }
-  }
-
-  function getFoodMultiSelection() {
-    return FOOD_VALUES.flatMap((value) => Array(foodCounts[value]).fill(value));
-  }
-
-  function updateFoodMultiUI() {
-    const total = getFoodMultiTotal();
-
-    form?.querySelectorAll('.food-multi__option').forEach((label) => {
-      const value = label.dataset.food;
-      const count = foodCounts[value] || 0;
-      const input = label.querySelector('input');
-      const countEl = label.querySelector('.food-multi__count');
-
-      if (input) input.checked = count > 0;
-      if (countEl) {
-        if (count > 1) {
-          countEl.textContent = `×${count}`;
-          countEl.hidden = false;
-        } else {
-          countEl.textContent = '';
-          countEl.hidden = true;
-        }
-      }
-    });
-
-    const status = document.getElementById('food-multi-status');
-    if (status) {
-      status.textContent = `Выбрано ${total} из ${PLUS_ONE_DISH_COUNT}`;
-    }
-  }
-
-  function onFoodMultiClick(e) {
-    e.preventDefault();
-
-    const label = e.currentTarget;
-    const value = label.dataset.food;
-    if (!value || !FOOD_VALUES.includes(value)) return;
-
-    const total = getFoodMultiTotal();
-    const count = foodCounts[value];
-
-    if (total < PLUS_ONE_DISH_COUNT) {
-      foodCounts[value] = count + 1;
-    } else if (count > 0) {
-      foodCounts[value] = count - 1;
-    }
-
-    updateFoodMultiUI();
-  }
-
-  function updateFoodMode(withGuests) {
-    const foodSingle = document.getElementById('food-single');
-    const foodPlus = document.getElementById('food-plus');
-    if (!foodSingle || !foodPlus) return;
-
-    foodSingle.hidden = withGuests;
-    foodPlus.hidden = !withGuests;
-
-    if (withGuests) {
-      clearGroupInputs(foodSingle);
-      updateFoodMultiUI();
-    } else {
-      resetFoodCounts();
     }
   }
 
@@ -461,13 +388,6 @@
     const plusOne = attendance === 'yes-plus';
     const showCompanions = plusOne || unsure;
     const transferPickup = needsTransferPickup();
-
-    if (!plusOne || !attending) {
-      resetFoodCounts();
-    } else {
-      trimFoodCounts();
-      updateFoodMultiUI();
-    }
 
     const companionsGroup = document.getElementById('companions-group');
     const companionsEl = form.companions;
@@ -491,38 +411,16 @@
       clearGroupInputs(document.getElementById('attendance-reason-group'));
     }
 
-    setGroupVisible(document.getElementById('food-group'), attending);
-    updateFoodMode(plusOne && attending);
+    setGroupVisible(document.getElementById('dietary-group'), attending);
     setGroupVisible(document.getElementById('transfer-group'), attending);
     setGroupVisible(document.getElementById('overnight-group'), attending);
     setGroupVisible(document.getElementById('alcohol-group'), attending);
-    setGroupVisible(document.getElementById('allergies-group'), attending);
-
-    const allergiesChoice = form.querySelector('input[name="allergiesChoice"]:checked')?.value;
-    const allergiesYes = allergiesChoice === 'yes';
-    const allergiesDetailGroup = document.getElementById('allergies-detail-group');
-    const allergiesEl = form.allergies;
-
-    setGroupVisible(allergiesDetailGroup, attending && allergiesYes);
-    if (allergiesEl) {
-      if (attending && allergiesYes) {
-        allergiesEl.setAttribute('required', '');
-      } else {
-        allergiesEl.removeAttribute('required');
-      }
-    }
-    if (!allergiesYes && allergiesEl) {
-      allergiesEl.value = '';
-    }
 
     if (!attending) {
-      clearGroupInputs(document.getElementById('food-group'));
-      updateFoodMode(false);
+      clearGroupInputs(document.getElementById('dietary-group'));
       clearGroupInputs(document.getElementById('transfer-group'));
       clearGroupInputs(document.getElementById('overnight-group'));
       clearGroupInputs(document.getElementById('alcohol-group'));
-      clearGroupInputs(document.getElementById('allergies-group'));
-      clearGroupInputs(document.getElementById('allergies-detail-group'));
     }
 
     setGroupVisible(document.getElementById('transfer-pickup-group'), attending && transferPickup);
@@ -532,11 +430,11 @@
   }
 
   if (form) {
-    form.querySelectorAll('input[name="attendance"], input[name="transfer"], input[name="allergiesChoice"]').forEach((input) => {
+    form.querySelectorAll('input[name="attendance"], input[name="transfer"]').forEach((input) => {
       input.addEventListener('change', updateFormVisibility);
     });
-    form.querySelectorAll('.food-multi__option').forEach((label) => {
-      label.addEventListener('click', onFoodMultiClick);
+    form.querySelectorAll('input[name="dietary"]').forEach((input) => {
+      input.addEventListener('change', () => onDietaryChange(input));
     });
     updateFormVisibility();
 
@@ -577,18 +475,22 @@
 
       const transfer = form.querySelector('input[name="transfer"]:checked')?.value || '';
       const transferPickup = form.querySelector('input[name="transferPickup"]:checked');
-      const foodSingle = form.querySelector('input[name="food"]:checked');
-      const foodMultiSelection = getFoodMultiSelection();
+      const dietaryChecked = getDietaryChecked();
+      const dietaryDetails = form.dietaryDetails.value.trim();
       const overnight = form.querySelector('input[name="overnight"]:checked');
       const alcoholChecked = form.querySelectorAll('input[name="alcohol"]:checked');
 
-      if (!isNotAttending && isPlusOne) {
-        if (foodMultiSelection.length !== PLUS_ONE_DISH_COUNT) {
-          alert('Пожалуйста, выберите два блюда — для вас и для гостя.');
-          return;
-        }
-      } else if (!isNotAttending && !foodSingle) {
-        alert('Пожалуйста, выберите блюдо.');
+      if (!isNotAttending && dietaryChecked.length === 0) {
+        alert('Пожалуйста, укажите, есть ли у вас ограничения в питании.');
+        return;
+      }
+
+      const needsDietaryDetails = dietaryChecked.some(
+        (input) => input.value === 'allergy' || input.value === 'other'
+      );
+      if (!isNotAttending && needsDietaryDetails && !dietaryDetails) {
+        form.dietaryDetails.focus();
+        alert('Пожалуйста, расскажите подробнее об особенностях питания.');
         return;
       }
 
@@ -602,30 +504,13 @@
         return;
       }
 
-      const allergiesChoice = form.querySelector('input[name="allergiesChoice"]:checked');
-      const allergiesText = form.allergies.value.trim();
-
-      if (!isNotAttending && !allergiesChoice) {
-        alert('Пожалуйста, укажите, есть ли у вас пищевые аллергии.');
-        return;
-      }
-
-      if (!isNotAttending && allergiesChoice?.value === 'yes' && !allergiesText) {
-        form.allergies.focus();
-        alert('Пожалуйста, укажите, на что именно у вас аллергия.');
-        return;
-      }
-
       const data = {
         name,
         attendance: attendance.value,
         attendanceReason: isUnsure ? attendanceReason : '',
         companions,
-        food: !isNotAttending
-          ? isPlusOne
-            ? foodMultiSelection
-            : foodSingle.value
-          : '',
+        dietary: !isNotAttending ? dietaryChecked.map((input) => input.value) : [],
+        dietaryDetails: !isNotAttending ? dietaryDetails : '',
         transfer,
         transferPickup:
           !isNotAttending && transfer && transfer !== 'no' && transferPickup
@@ -633,11 +518,6 @@
             : '',
         overnight: !isNotAttending && overnight ? overnight.value : '',
         alcohol: Array.from(alcoholChecked).map((cb) => cb.value),
-        allergies: !isNotAttending
-          ? allergiesChoice.value === 'no'
-            ? 'Нет'
-            : allergiesText
-          : '',
         submittedAt: new Date().toISOString(),
       };
 

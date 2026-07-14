@@ -9,6 +9,7 @@
   <link rel="apple-touch-icon" href="images/logos/apple-touch-icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://use.typekit.net/fxa1vkw.css">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Montserrat:wght@300;400;500&display=swap" rel="stylesheet">
   <link href="https://fonts.cdnfonts.com/css/miama-nueva" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
@@ -328,53 +329,52 @@
           <textarea id="companions" name="companions" class="form__textarea" rows="3" placeholder="Например: девушка Татьяна, муж Сергей, сын Данила"></textarea>
         </div>
 
-        <div class="form__group form__group--conditional" id="food-group">
-          <fieldset class="form__fieldset" id="food-single">
-            <legend class="form__label">Выбор блюда <span>*</span></legend>
-            <label class="form__radio">
-              <input type="radio" name="food" value="chicken">
-              <span>Курица</span>
+        <div class="form__group form__group--conditional" id="dietary-group">
+          <fieldset class="form__fieldset">
+            <legend class="form__label">Особенности питания</legend>
+            <p class="form__hint">
+              Мы хотим, чтобы каждому гостю было вкусно и комфортно. Если у вас есть особенности питания или продукты, которые важно исключить, пожалуйста, сообщите нам об этом.
+            </p>
+            <p class="form__question">Есть ли у вас ограничения в питании? <span>*</span></p>
+            <label class="form__checkbox">
+              <input type="checkbox" name="dietary" value="none">
+              <span>Особых ограничений нет</span>
             </label>
-            <label class="form__radio">
-              <input type="radio" name="food" value="fish">
-              <span>Рыба</span>
+            <label class="form__checkbox">
+              <input type="checkbox" name="dietary" value="no-fish">
+              <span>Не ем рыбу и морепродукты</span>
             </label>
-            <label class="form__radio">
-              <input type="radio" name="food" value="meat">
-              <span>Мясо</span>
+            <label class="form__checkbox">
+              <input type="checkbox" name="dietary" value="no-pork">
+              <span>Не ем свинину</span>
             </label>
-            <label class="form__radio">
-              <input type="radio" name="food" value="vegetarian">
-              <span>Вегетарианец</span>
+            <label class="form__checkbox">
+              <input type="checkbox" name="dietary" value="no-beef">
+              <span>Не ем говядину</span>
+            </label>
+            <label class="form__checkbox">
+              <input type="checkbox" name="dietary" value="no-poultry">
+              <span>Не ем птицу</span>
+            </label>
+            <label class="form__checkbox">
+              <input type="checkbox" name="dietary" value="vegetarian">
+              <span>Вегетарианское питание</span>
+            </label>
+            <label class="form__checkbox">
+              <input type="checkbox" name="dietary" value="vegan">
+              <span>Веганское питание</span>
+            </label>
+            <label class="form__checkbox">
+              <input type="checkbox" name="dietary" value="allergy">
+              <span>Пищевая аллергия</span>
+            </label>
+            <label class="form__checkbox">
+              <input type="checkbox" name="dietary" value="other">
+              <span>Другое</span>
             </label>
           </fieldset>
-          <fieldset class="form__fieldset" id="food-plus" hidden>
-            <legend class="form__label">Выбор блюда <span>*</span></legend>
-            <p class="form__hint">Выберите два блюда — для вас и для гостя. Можно выбрать одинаковые варианты — нажмите на блюдо ещё раз.</p>
-            <div class="food-multi" id="food-multi">
-              <label class="form__checkbox food-multi__option" data-food="chicken">
-                <input type="checkbox" name="foodMulti" value="chicken" tabindex="-1" aria-hidden="true">
-                <span class="food-multi__label">Курица</span>
-                <span class="food-multi__count" hidden aria-hidden="true"></span>
-              </label>
-              <label class="form__checkbox food-multi__option" data-food="fish">
-                <input type="checkbox" name="foodMulti" value="fish" tabindex="-1" aria-hidden="true">
-                <span class="food-multi__label">Рыба</span>
-                <span class="food-multi__count" hidden aria-hidden="true"></span>
-              </label>
-              <label class="form__checkbox food-multi__option" data-food="meat">
-                <input type="checkbox" name="foodMulti" value="meat" tabindex="-1" aria-hidden="true">
-                <span class="food-multi__label">Мясо</span>
-                <span class="food-multi__count" hidden aria-hidden="true"></span>
-              </label>
-              <label class="form__checkbox food-multi__option" data-food="vegetarian">
-                <input type="checkbox" name="foodMulti" value="vegetarian" tabindex="-1" aria-hidden="true">
-                <span class="food-multi__label">Вегетарианец</span>
-                <span class="food-multi__count" hidden aria-hidden="true"></span>
-              </label>
-            </div>
-            <p class="form__hint food-multi__status" id="food-multi-status" aria-live="polite"></p>
-          </fieldset>
+          <label for="dietary-details" class="form__label form__label--follow">Если необходимо, расскажите подробнее</label>
+          <textarea id="dietary-details" name="dietaryDetails" class="form__textarea" rows="3" placeholder="Например: непереносимость лактозы, аллергия на орехи"></textarea>
         </div>
 
         <div class="form__group form__group--conditional" id="transfer-group">
@@ -464,25 +464,6 @@
               <span>Не употребляю алкоголь</span>
             </label>
           </fieldset>
-        </div>
-
-        <div class="form__group form__group--conditional" id="allergies-group">
-          <fieldset class="form__fieldset">
-            <legend class="form__label">Есть ли у вас пищевые аллергии? <span>*</span></legend>
-            <label class="form__radio">
-              <input type="radio" name="allergiesChoice" value="no">
-              <span>Нет</span>
-            </label>
-            <label class="form__radio">
-              <input type="radio" name="allergiesChoice" value="yes">
-              <span>Да</span>
-            </label>
-          </fieldset>
-        </div>
-
-        <div class="form__group form__group--conditional" id="allergies-detail-group" hidden>
-          <label for="allergies" class="form__label">Укажите, на что именно <span>*</span></label>
-          <textarea id="allergies" name="allergies" class="form__textarea" rows="3" placeholder="Например: орехи, морепродукты, лактоза"></textarea>
         </div>
 
         <div class="form-error" id="form-error" hidden role="alert"></div>

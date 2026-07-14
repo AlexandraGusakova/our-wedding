@@ -1376,6 +1376,22 @@ a {
   color: var(--color-rose);
 }
 
+.form__question {
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  color: var(--color-text);
+  margin: 1.25rem 0 0.75rem;
+}
+
+.form__question span {
+  color: var(--color-rose);
+}
+
+.form__label--follow {
+  margin-top: 1.25rem;
+}
+
 .form__input,
 .form__textarea {
   width: 100%;
@@ -1408,22 +1424,6 @@ a {
 
 .form__input--narrow {
   max-width: 6rem;
-}
-
-.food-multi__count {
-  margin-left: auto;
-  font-size: 0.82rem;
-  font-weight: 500;
-  color: var(--color-sage);
-}
-
-.food-multi__status {
-  margin-top: 0.5rem;
-  margin-bottom: 0;
-}
-
-.food-multi__option {
-  user-select: none;
 }
 
 .form__radio,
