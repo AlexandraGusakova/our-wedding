@@ -367,9 +367,27 @@
   }
 
   const DIETARY_NONE_VALUE = 'none';
+  const DIETARY_LABELS = {
+    none: 'Особых ограничений нет',
+    'no-fish': 'Не ем рыбу и морепродукты',
+    'no-pork': 'Не ем свинину',
+    'no-beef': 'Не ем говядину',
+    'no-poultry': 'Не ем птицу',
+    vegetarian: 'Вегетарианское питание',
+    vegan: 'Веганское питание',
+    allergy: 'Пищевая аллергия',
+    other: 'Другое',
+  };
 
   function getDietaryChecked() {
     return form ? Array.from(form.querySelectorAll('input[name="dietary"]:checked')) : [];
+  }
+
+  function getDietaryLabels(checkedInputs) {
+    return checkedInputs.map((input) => {
+      const label = input.closest('label')?.querySelector('span');
+      return label?.textContent.trim() || DIETARY_LABELS[input.value] || input.value;
+    });
   }
 
   function onDietaryChange(changedInput) {
@@ -519,13 +537,19 @@
         return;
       }
 
+      const dietaryLabels = !isNotAttending ? getDietaryLabels(dietaryChecked) : [];
+      const dietaryDetailsValue = !isNotAttending ? dietaryDetails : '';
+
       const data = {
         name,
         attendance: attendance.value,
         attendanceReason: isUnsure ? attendanceReason : '',
         companions,
-        dietary: !isNotAttending ? dietaryChecked.map((input) => input.value) : [],
-        dietaryDetails: !isNotAttending ? dietaryDetails : '',
+        dietary: dietaryLabels,
+        dietaryDetails: dietaryDetailsValue,
+        // Совместимость со старым развёртыванием Apps Script
+        food: dietaryLabels,
+        allergies: dietaryDetailsValue,
         transfer,
         transferPickup:
           !isNotAttending && transfer && transfer !== 'no' && transferPickup
