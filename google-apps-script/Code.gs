@@ -10,6 +10,11 @@
  *    — У кого есть доступ: Все
  * 5. URL развёртывания → config.js на сайте (GOOGLE_SCRIPT_URL).
  *
+ * Если ответы не попадают в таблицу:
+ * — Запустите testSaveResponse() в редакторе Apps Script.
+ * — Если ошибка доступа: setSpreadsheetId('ID_ИЗ_URL_ТАБЛИЦЫ').
+ * — Развернуть → Управление развёртываниями → Новая версия.
+ *
  * === TELEGRAM-УВЕДОМЛЕНИЯ ===
  * 1. Создайте бота через @BotFather → скопируйте токен.
  * 2. Напишите боту любое сообщение.
@@ -29,6 +34,7 @@
 
 var SHEET_NAME = 'Ответы';
 var SUMMARY_SHEET = 'Сводка';
+var SPREADSHEET_ID_PROPERTY = 'SPREADSHEET_ID';
 
 var ATTENDANCE_LABELS = {
   yes: 'Да, обязательно буду',
@@ -92,10 +98,16 @@ function doPost(e) {
     var row = buildResponseRow_(payload);
 
     sheet.appendRow(row);
-    scheduleTelegramNotification_(payload, row);
+
+    try {
+      scheduleTelegramNotification_(payload, row);
+    } catch (telegramErr) {
+      Logger.log('Telegram schedule error: ' + telegramErr);
+    }
 
     return jsonResponse_({ success: true });
   } catch (err) {
+    Logger.log('doPost error: ' + err);
     return jsonResponse_({ success: false, error: String(err) });
   }
 }
@@ -109,7 +121,7 @@ function doGet() {
 
 /** Запустите один раз для создания листов, сводки, графиков и сводных таблиц. */
 function setupSheet() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = getSpreadsheet_();
   var sheet = ss.getSheetByName(SHEET_NAME);
 
   if (!sheet) {
@@ -156,7 +168,7 @@ function setupSheet() {
 
 /** Пересоздать графики и сводные таблицы. Формулы в A:B не меняются. */
 function refreshSummarySheet() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = getSpreadsheet_();
   var summary = ss.getSheetByName(SUMMARY_SHEET);
   if (!summary) {
     setupSummarySheet_(ss, { formulas: true, visuals: true });
@@ -168,7 +180,7 @@ function refreshSummarySheet() {
 
 /** Переустановить формулы сводки (по одной ячейке — надёжнее, чем пакетный setFormulas). */
 function reapplySummaryFormulas() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = getSpreadsheet_();
   var summary = ss.getSheetByName(SUMMARY_SHEET);
   if (!summary) {
     setupSummarySheet_(ss, { formulas: true, visuals: false });
@@ -225,8 +237,57 @@ function setupTelegramTrigger() {
   );
 }
 
-function getOrCreateSheet_() {
+/**
+ * Привязать таблицу по ID (из URL: docs.google.com/spreadsheets/d/ЭТОТ_ID/edit).
+ * Запустите один раз, если веб-приложение не видит таблицу.
+ */
+function setSpreadsheetId(spreadsheetId) {
+  PropertiesService.getScriptProperties().setProperty(
+    SPREADSHEET_ID_PROPERTY,
+    String(spreadsheetId).trim()
+  );
+  SpreadsheetApp.getUi().alert('ID таблицы сохранён.');
+}
+
+/** Тест записи в таблицу из редактора Apps Script. */
+function testSaveResponse() {
+  var payload = {
+    name: 'Тест из Apps Script',
+    attendance: 'yes',
+    attendanceReason: '',
+    companions: '',
+    dietary: ['none'],
+    dietaryDetails: '',
+    transfer: 'no',
+    transferPickup: '',
+    overnight: 'no',
+    alcohol: ['Не употребляю алкоголь'],
+  };
+
+  var sheet = getOrCreateSheet_();
+  var row = buildResponseRow_(payload);
+  sheet.appendRow(row);
+  SpreadsheetApp.getUi().alert('Тестовая строка добавлена на лист «' + SHEET_NAME + '».');
+}
+
+function getSpreadsheet_() {
+  var id = PropertiesService.getScriptProperties().getProperty(SPREADSHEET_ID_PROPERTY);
+  if (id) {
+    return SpreadsheetApp.openById(id);
+  }
+
   var ss = SpreadsheetApp.getActiveSpreadsheet();
+  if (!ss) {
+    throw new Error(
+      'Таблица не найдена. Откройте проект из Google Таблицы или запустите setSpreadsheetId("ID_ТАБЛИЦЫ").'
+    );
+  }
+
+  return ss;
+}
+
+function getOrCreateSheet_() {
+  var ss = getSpreadsheet_();
   var sheet = ss.getSheetByName(SHEET_NAME);
 
   if (!sheet) {
@@ -313,6 +374,13 @@ function setupSummarySheet_(ss, options) {
   buildSummaryCharts_(summary);
 }
 
+function getDietarySummaryMetrics_(sheetRange) {
+  return Object.keys(DIETARY_LABELS).map(function (key) {
+    var label = DIETARY_LABELS[key];
+    return [label, countifFormula_(sheetRange('H:H'), '*' + label + '*')];
+  });
+}
+
 function getSummaryMetrics_() {
   var sheetRange = function (col) {
     return SHEET_NAME + '!' + col;
@@ -330,11 +398,9 @@ function getSummaryMetrics_() {
     ['Трансфер: туда и обратно', countifFormula_(sheetRange('F:F'), 'И туда, и обратно')],
     ['Трансфер не нужен', countifFormula_(sheetRange('F:F'), 'Не нужен')],
     ['', ''],
-    ['Особых ограничений нет', countifFormula_(sheetRange('H:H'), '*Особых ограничений нет*')],
-    ['Без рыбы и морепродуктов', countifFormula_(sheetRange('H:H'), '*рыбу и морепродукты*')],
-    ['Вегетарианское питание', countifFormula_(sheetRange('H:H'), '*Вегетарианское*')],
-    ['Веганское питание', countifFormula_(sheetRange('H:H'), '*Веганское*')],
-    ['Пищевая аллергия', countifFormula_(sheetRange('H:H'), '*Пищевая аллергия*')],
+  ]
+    .concat(getDietarySummaryMetrics_(sheetRange))
+    .concat([
     ['', ''],
     ['Белое вино', countifFormula_(sheetRange('I:I'), '*Белое вино*')],
     ['Красное вино', countifFormula_(sheetRange('I:I'), '*Красное вино*')],
@@ -345,7 +411,7 @@ function getSummaryMetrics_() {
     ['Ночёвка: да', countifFormula_(sheetRange('K:K'), 'Да*')],
     ['Ночёвка: нет', countifFormula_(sheetRange('K:K'), 'Нет*')],
     ['С особенностями питания', dietaryRestrictionsFormula_()],
-  ];
+  ]);
 }
 
 /** По одной ячейке — обход бага пакетного setFormulas в Google Таблицах. */
@@ -572,13 +638,11 @@ function sendTelegramNotification_(payload, row) {
     return;
   }
 
-  var name = row[1] || '—';
-  var attendance = row[2] || '—';
   var lines = [
     '💌 Новый ответ на анкету',
     '',
-    '👤 ' + name,
-    '📋 ' + attendance,
+    '👤 ' + (row[1] || '—'),
+    '📋 ' + (row[2] || '—'),
   ];
 
   if (row[3]) {
@@ -587,25 +651,18 @@ function sendTelegramNotification_(payload, row) {
   if (row[4]) {
     lines.push('👥 С кем: ' + row[4]);
   }
+
   if (payload.attendance && payload.attendance !== 'no') {
-    if (row[5] && row[5] !== '—') {
-      lines.push('🚌 Трансфер: ' + row[5]);
-    }
+    lines.push('🚌 Трансфер: ' + (row[5] || '—'));
     if (row[6] && row[6] !== '—') {
       lines.push('📍 Откуда: ' + row[6]);
     }
-    if (row[7]) {
-      lines.push('🍽 Питание: ' + row[7]);
-    }
-    if (row[8]) {
-      lines.push('🥂 Алкоголь: ' + row[8]);
-    }
+    lines.push('🍽 Питание: ' + (row[7] || '—'));
     if (row[9]) {
       lines.push('📝 Подробности: ' + row[9]);
     }
-    if (row[10] && row[10] !== '—') {
-      lines.push('🌙 Ночёвка: ' + row[10]);
-    }
+    lines.push('🥂 Алкоголь: ' + (row[8] || '—'));
+    lines.push('🌙 Ночёвка: ' + (row[10] || '—'));
   }
 
   sendTelegramMessage_(tg.token, tg.chatId, lines.join('\n'));

@@ -304,13 +304,28 @@
       );
     }
 
-    // no-cors + text/plain — стандартный способ для Google Apps Script
-    await fetch(GOOGLE_SCRIPT_URL, {
+    const response = await fetch(GOOGLE_SCRIPT_URL, {
       method: 'POST',
-      mode: 'no-cors',
+      mode: 'cors',
+      redirect: 'follow',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify(data),
     });
+
+    const text = await response.text();
+
+    let result;
+    try {
+      result = JSON.parse(text);
+    } catch {
+      throw new Error(
+        'Сервер вернул неожиданный ответ. Переразверните Google Apps Script и проверьте доступ к таблице.'
+      );
+    }
+
+    if (!result.success) {
+      throw new Error(result.error || 'Не удалось сохранить ответ в таблицу.');
+    }
   }
 
   // RSVP form
@@ -517,7 +532,10 @@
             ? transferPickup.value
             : '',
         overnight: !isNotAttending && overnight ? overnight.value : '',
-        alcohol: Array.from(alcoholChecked).map((cb) => cb.value),
+        alcohol: Array.from(alcoholChecked).map((cb) => {
+          const label = cb.closest('label')?.querySelector('span');
+          return label ? label.textContent.trim() : cb.value;
+        }),
         submittedAt: new Date().toISOString(),
       };
 
